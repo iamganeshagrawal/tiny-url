@@ -4,6 +4,26 @@
 // This will be replaced by the build script with actual URL mappings
 const URL_MAPPINGS = __URL_MAPPINGS__;
 
+function levenshtein(a, b) {
+  const matrix = Array.from({ length: a.length + 1 }, () => []);
+  
+  for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
+  for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
+
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost
+      );
+    }
+  }
+  
+  return matrix[a.length][b.length];
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -13,7 +33,7 @@ export default {
     if (path === '/') {
       const urlCount = Object.keys(URL_MAPPINGS).length;
       const urlList = Object.entries(URL_MAPPINGS)
-        .map(([key, value]) => `<li><code>${key}</code> → <a href="${value}" target="_blank">${value}</a></li>`)
+        .map(([key, value]) => `<li><a href="${url.origin}/${key}"<code>${key}</code> → ${value}</li>`)
         .join('');
 
       return new Response(`
@@ -150,7 +170,7 @@ export default {
       
       return Response.redirect(targetUrl, 301);
     } else {
-      const availableUrls = Object.keys(URL_MAPPINGS).slice(0, 5).join(', ');
+      const availableUrls = Object.keys(URL_MAPPINGS).filter(key => levenshtein(key, targetUrl) <= 2).slice(0, 5).join(', ');
       
       return new Response(`
         <!DOCTYPE html>
@@ -189,7 +209,7 @@ export default {
           
           <div class="suggestions">
             <h3>💡 Available URLs include:</h3>
-            <p><code>${availableUrls}</code>${Object.keys(URL_MAPPINGS).length > 5 ? '...' : ''}</p>
+            <p><code>${availableUrls}</code></p>
           </div>
           
           <div class="back">
@@ -207,3 +227,4 @@ export default {
     }
   },
 };
+
