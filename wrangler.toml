@@ -11,6 +11,10 @@ name = "tiny"
 [build]
 command = "npm run build"
 
+[[analytics_engine_datasets]]
+binding = "ANALYTICS"
+dataset = "tiny_url_events"
+
 routes = [
   { pattern = "tiny.ganeshagrawal.com", custom_domain = true }
 ]
