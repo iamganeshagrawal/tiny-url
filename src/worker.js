@@ -4,25 +4,6 @@
 // This will be replaced by the build script with actual URL mappings
 const URL_MAPPINGS = __URL_MAPPINGS__;
 
-function levenshtein(a, b) {
-  const matrix = Array.from({ length: a.length + 1 }, () => []);
-  
-  for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
-  for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
-
-  for (let i = 1; i <= a.length; i++) {
-    for (let j = 1; j <= b.length; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      matrix[i][j] = Math.min(
-        matrix[i - 1][j] + 1,
-        matrix[i][j - 1] + 1,
-        matrix[i - 1][j - 1] + cost
-      );
-    }
-  }
-  
-  return matrix[a.length][b.length];
-}
 
 export default {
   async fetch(request, env, ctx) {
@@ -157,7 +138,7 @@ export default {
 
     // Handle short URL redirects
     const shortCode = path.substring(1); // Remove leading slash
-    
+
     if (!shortCode) {
       return new Response('Not Found', { status: 404 });
     }
@@ -167,11 +148,32 @@ export default {
     if (targetUrl) {
       // Log the redirect for analytics (if needed)
       console.log(`Redirecting ${shortCode} to ${targetUrl}`);
-      
+
       return Response.redirect(targetUrl, 301);
     } else {
+
+      function levenshtein(a, b) {
+        const matrix = Array.from({ length: a.length + 1 }, () => []);
+
+        for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
+        for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
+
+        for (let i = 1; i <= a.length; i++) {
+          for (let j = 1; j <= b.length; j++) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+            matrix[i][j] = Math.min(
+              matrix[i - 1][j] + 1,
+              matrix[i][j - 1] + 1,
+              matrix[i - 1][j - 1] + cost
+            );
+          }
+        }
+
+        return matrix[a.length][b.length];
+      }
       const availableUrls = Object.keys(URL_MAPPINGS).filter(key => levenshtein(key, targetUrl) <= 2).slice(0, 5).join(', ');
-      
+      console.log("Similar Keys:", availableUrls || "No similar keys found");
+
       return new Response(`
         <!DOCTYPE html>
         <html>
@@ -219,7 +221,7 @@ export default {
         </html>
       `, {
         status: 404,
-        headers: { 
+        headers: {
           'Content-Type': 'text/html',
           'Cache-Control': 'public, max-age=300' // Cache 404s for 5 minutes
         },
