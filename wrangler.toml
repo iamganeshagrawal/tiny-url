@@ -10,3 +10,7 @@ name = "tiny"
 # Build configuration
 [build]
 command = "npm run build"
+
+routes = [
+  { pattern = "tiny.ganeshagrawal.com", custom_domain = true }
+]
