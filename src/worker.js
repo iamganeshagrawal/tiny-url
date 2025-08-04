@@ -171,7 +171,10 @@ export default {
 
         return matrix[a.length][b.length];
       }
-      const availableUrls = Object.keys(URL_MAPPINGS).filter(key => levenshtein(key, targetUrl) <= 2).slice(0, 5).join(', ');
+      const availableUrls = Object.keys(URL_MAPPINGS).filter(key => {
+        console.log({key, targetUrl, levenshtein: levenshtein(key, targetUrl)});
+        return levenshtein(key, targetUrl) <= 2
+      }).slice(0, 5).join(', ');
       console.log("Similar Keys:", availableUrls || "No similar keys found");
 
       return new Response(`
