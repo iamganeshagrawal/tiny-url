@@ -150,8 +150,9 @@ export default {
       console.log(`Redirecting ${shortCode} to ${targetUrl}`);
 
       env.ANALYTICS.writeDataPoint({
-        'blobs': [targetUrl],
+        'blobs': [shortCode,targetUrl],
         'doubles': [1],
+        'indexes': ["hit"]
       });
 
       return Response.redirect(targetUrl, 301);
@@ -177,7 +178,12 @@ export default {
         return matrix[a.length][b.length];
       }
       const availableUrls = Object.keys(URL_MAPPINGS).filter(key => levenshtein(key, shortCode) <= 2).slice(0, 5).join(', ');
-      console.log("Similar Keys:", availableUrls || "No similar keys found");
+      
+      env.ANALYTICS.writeDataPoint({
+        'blobs': [shortCode,'NOT_FOUND'],
+        'doubles': [1],
+        'indexes': ["miss"]
+      });
 
       return new Response(`
         <!DOCTYPE html>
